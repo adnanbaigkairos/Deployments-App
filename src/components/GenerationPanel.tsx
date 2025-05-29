@@ -101,7 +101,7 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
             type: activeTab,
             originalPrompt: originalPromptUsed,
             finalPrompt: currentPrompt,
-            urls: result.imageUrls, // Store all image URLs
+            url: result.imageUrls[0], // Reverted: Store only the first image URL
             timestamp: Date.now(),
           });
         }
@@ -114,7 +114,7 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
             type: activeTab,
             originalPrompt: originalPromptUsed,
             finalPrompt: currentPrompt,
-            urls: [result.videoDataUri], // Store video URL in an array
+            url: result.videoDataUri, // Reverted: Store video URL directly
             timestamp: Date.now(),
           });
       }

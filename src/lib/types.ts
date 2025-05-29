@@ -3,6 +3,6 @@ export interface GenerationItem {
   type: 'image' | 'video';
   originalPrompt: string;
   finalPrompt: string; // The prompt used for generation (could be original or enhanced)
-  urls: string[]; // Image URLs or a single Video Data URI in an array
+  url: string; // Image URL or Video Data URI
   timestamp: number;
 }

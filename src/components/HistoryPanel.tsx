@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Download, Eye, History, ImageIcon, VideoIcon, FileText, PlusCircle } from 'lucide-react';
+import { Trash2, Download, Eye, History, ImageIcon, VideoIcon, FileText } from 'lucide-react'; // Removed PlusCircle
 import type { GenerationItem } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -55,21 +55,14 @@ const HistoryPanel: FC<HistoryPanelProps> = ({ history, onClearHistory, onViewIt
               {history.map((item) => (
                 <div key={item.id} className="p-3 border border-border/70 rounded-lg bg-background/50 flex items-start gap-3 transition-all hover:border-primary/50">
                   <div className="flex-shrink-0 w-16 h-16 rounded-md bg-muted flex items-center justify-center overflow-hidden relative">
-                    {item.type === 'image' && item.urls && item.urls.length > 0 ? (
-                       <Image src={item.urls[0]} alt="Generated thumbnail" width={64} height={64} className="object-cover w-full h-full" />
-                    ) : item.type === 'video' && item.urls && item.urls.length > 0 ? (
+                    {item.type === 'image' && item.url ? ( // Reverted: Check item.url
+                       <Image src={item.url} alt="Generated thumbnail" width={64} height={64} className="object-cover w-full h-full" />
+                    ) : item.type === 'video' && item.url ? ( // Reverted: Check item.url
                       <VideoIcon className="h-8 w-8 text-primary" />
                     ) : (
                       <FileText className="h-8 w-8 text-muted-foreground" />
                     )}
-                    {item.type === 'image' && item.urls && item.urls.length > 1 && (
-                      <div 
-                        className="absolute bottom-0 right-0 bg-black/70 text-white text-[10px] px-1 py-0.5 rounded-tl-md flex items-center"
-                        title={`${item.urls.length} images generated`}
-                      >
-                        <PlusCircle size={10} className="mr-0.5" /> {item.urls.length}
-                      </div>
-                    )}
+                    {/* Reverted: Removed multi-image indicator (PlusCircle) */}
                   </div>
                   <div className="flex-grow min-w-0">
                     <p className="text-xs text-muted-foreground capitalize">{item.type} &bull; {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}</p>

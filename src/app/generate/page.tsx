@@ -26,7 +26,7 @@ export default function GeneratePage() {
   const currentPromptToUse = enhancedPrompt.trim() || originalPrompt.trim();
 
   const addHistoryItem = useCallback((item: GenerationItem) => {
-    setHistory(prevHistory => [item, ...prevHistory].slice(0, 6)); // Keep last 6 items
+    setHistory(prevHistory => [item, ...prevHistory]); // Reverted: Removed slice(0, 6)
   }, [setHistory]);
 
   const clearHistory = () => {
@@ -39,12 +39,12 @@ export default function GeneratePage() {
   };
 
   const handleDownloadItem = (item: GenerationItem) => {
-    if (!item.urls || item.urls.length === 0) {
+    if (!item.url) { // Reverted: item.urls to item.url
       toast({ title: "Download Error", description: "No content to download.", variant: "destructive" });
       return;
     }
     const link = document.createElement('a');
-    link.href = item.urls[0]; // Download the first item in the array
+    link.href = item.url; // Reverted: item.urls[0] to item.url
     link.download = item.type === 'image' 
       ? `visicraft_history_image_${item.id}.png` 
       : `visicraft_history_video_${item.id}.mp4`;
@@ -101,25 +101,21 @@ export default function GeneratePage() {
           </div>
         </div>
       </main>
-       {viewedItem && viewedItem.urls && viewedItem.urls.length > 0 && (
+       {viewedItem && viewedItem.url && ( // Reverted: viewedItem.urls to viewedItem.url
         <Dialog open={!!viewedItem} onOpenChange={(open) => !open && setViewedItem(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>View Generation: {viewedItem.type === 'image' ? 'Image' : 'Video'}</DialogTitle>
               <DialogDescription>
                 Prompt: "{viewedItem.finalPrompt}"
-                {viewedItem.type === 'image' && viewedItem.urls.length > 1 && (
-                  <span className="block text-xs text-muted-foreground mt-1">
-                    Showing the first of {viewedItem.urls.length} generated images.
-                  </span>
-                )}
+                {/* Reverted: Removed multi-image count display */}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 max-h-[70vh] overflow-auto rounded-md">
               {viewedItem.type === 'image' ? (
-                <Image src={viewedItem.urls[0]} alt="Viewed Image" width={800} height={800} className="w-full h-auto object-contain rounded" />
+                <Image src={viewedItem.url} alt="Viewed Image" width={800} height={800} className="w-full h-auto object-contain rounded" /> // Reverted: viewedItem.urls[0] to viewedItem.url
               ) : (
-                <video src={viewedItem.urls[0]} controls className="w-full h-auto rounded" aria-label="Viewed Video Player">
+                <video src={viewedItem.url} controls className="w-full h-auto rounded" aria-label="Viewed Video Player"> {/* Reverted: viewedItem.urls[0] to viewedItem.url */}
                   Your browser does not support the video tag.
                 </video>
               )}
