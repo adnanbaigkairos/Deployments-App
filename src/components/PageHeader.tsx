@@ -16,27 +16,25 @@ const PageHeader: FC<PageHeaderProps> = ({ showNav = false }) => {
         <Link href="/" passHref>
           <Logo />
         </Link>
-        {showNav && (
-          <nav className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Home
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/generate">
-                <LayoutGrid className="mr-2 h-4 w-4" />
-                Generate
-              </Link>
-            </Button>
-            <ThemeToggleButton />
-          </nav>
-        )}
-        {/* If showNav is false, the theme toggle won't appear with the main nav elements
-            per the user request to place it "right side 'Generate' Button".
-            If a global theme toggle is needed on all pages, it would be placed outside this conditional.
-        */}
+        <div className="flex items-center gap-2">
+          {showNav && (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/generate">
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Generate
+                </Link>
+              </Button>
+            </>
+          )}
+          <ThemeToggleButton />
+        </div>
       </div>
     </header>
   );
