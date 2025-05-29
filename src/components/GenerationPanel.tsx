@@ -13,6 +13,8 @@ import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-imag
 import { generateVideo, type GenerateVideoInput } from '@/ai/flows/generate-video';
 import type { GenerationItem } from '@/lib/types';
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface GenerationPanelProps {
@@ -32,10 +34,11 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'image' | 'video'>('image');
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[] | null>(null);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [numberOfImagesToGenerate, setNumberOfImagesToGenerate] = useState<number>(2);
 
   const { toast } = useToast();
 
@@ -48,9 +51,15 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
     if (isLoading) {
       setProgress(0);
       let currentProgress = 0;
-      // Simulate progress for image generation (approx 10s) or video (approx 30s)
-      const duration = activeTab === 'image' ? 10000 : 30000;
-      const interval = duration / 100;
+      const baseImageDuration = 10000; // Approx 10s per image
+      const videoDuration = 30000; // Approx 30s for video
+      
+      const totalDuration = activeTab === 'image' 
+        ? baseImageDuration * numberOfImagesToGenerate 
+        : videoDuration;
+      
+      const interval = totalDuration / 100;
+
       timer = setInterval(() => {
         currentProgress += 1;
         if (currentProgress <= 100) {
@@ -63,7 +72,7 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
       setProgress(0); // Reset progress when not loading
     }
     return () => clearInterval(timer);
-  }, [isLoading, activeTab]);
+  }, [isLoading, activeTab, numberOfImagesToGenerate]);
 
 
   const handleGenerate = async () => {
@@ -78,36 +87,41 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
 
     setIsLoading(true);
     setError(null);
-    if (activeTab === 'image') setGeneratedImageUrl(null);
+    if (activeTab === 'image') setGeneratedImageUrls(null);
     if (activeTab === 'video') setGeneratedVideoUrl(null);
 
     try {
-      let resultUrl: string;
       if (activeTab === 'image') {
-        const input: GenerateImageInput = { prompt: currentPrompt };
+        const input: GenerateImageInput = { prompt: currentPrompt, numberOfImages: numberOfImagesToGenerate };
         const result = await generateImage(input);
-        resultUrl = result.imageUrl;
-        setGeneratedImageUrl(resultUrl);
+        setGeneratedImageUrls(result.imageUrls);
+         if (result.imageUrls.length > 0) {
+          addHistoryItem({
+            id: Date.now().toString(),
+            type: activeTab,
+            originalPrompt: originalPromptUsed,
+            finalPrompt: currentPrompt,
+            url: result.imageUrls[0], // Store first image in history
+            timestamp: Date.now(),
+          });
+        }
       } else { // video
         const input: GenerateVideoInput = { prompt: currentPrompt };
-        // The flow is typed to return a data URI string for video.
         const result = await generateVideo(input);
-        resultUrl = result.videoDataUri;
-        setGeneratedVideoUrl(resultUrl);
+        setGeneratedVideoUrl(result.videoDataUri);
+        addHistoryItem({
+            id: Date.now().toString(),
+            type: activeTab,
+            originalPrompt: originalPromptUsed,
+            finalPrompt: currentPrompt,
+            url: result.videoDataUri,
+            timestamp: Date.now(),
+          });
       }
 
       toast({
-        title: `${activeTab === 'image' ? 'Image' : 'Video'} Generated`,
+        title: `${activeTab === 'image' ? 'Image(s)' : 'Video'} Generated`,
         description: `Your ${activeTab} has been successfully generated.`,
-      });
-
-      addHistoryItem({
-        id: Date.now().toString(),
-        type: activeTab,
-        originalPrompt: originalPromptUsed,
-        finalPrompt: currentPrompt,
-        url: resultUrl,
-        timestamp: Date.now(),
       });
 
     } catch (err) {
@@ -115,28 +129,36 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
       setError(`Failed to generate ${activeTab}. ${errorMessage}`);
       toast({
-        title: `${activeTab === 'image' ? 'Image' : 'Video'} Generation Failed`,
+        title: `${activeTab === 'image' ? 'Image(s)' : 'Video'} Generation Failed`,
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-      setProgress(100); // Ensure progress bar completes
-      setTimeout(() => setProgress(0), 500); // Reset after a short delay
+      setProgress(100); 
+      setTimeout(() => setProgress(0), 500); 
     }
   };
 
-  const handleDownload = () => {
-    const url = activeTab === 'image' ? generatedImageUrl : generatedVideoUrl;
-    if (!url) return;
-
+  const handleIndividualImageDownload = (imageUrl: string, index: number) => {
     const link = document.createElement('a');
-    link.href = url;
-    link.download = activeTab === 'image' ? `visicraft_image_${Date.now()}.png` : `visicraft_video_${Date.now()}.mp4`;
+    link.href = imageUrl;
+    link.download = `visicraft_image_${Date.now()}_${index + 1}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast({ title: "Download Started", description: `${activeTab === 'image' ? 'Image' : 'Video'} download has started.` });
+    toast({ title: "Download Started", description: `Image ${index + 1} download has started.` });
+  };
+  
+  const handleVideoDownload = () => {
+    if (!generatedVideoUrl) return;
+    const link = document.createElement('a');
+    link.href = generatedVideoUrl;
+    link.download = `visicraft_video_${Date.now()}.mp4`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Download Started", description: `Video download has started.` });
   };
 
 
@@ -148,12 +170,12 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
           AI Generation Studio
         </CardTitle>
         <CardDescription>
-          Choose to generate an image or a video from your prompt.
+          Choose to generate image variations or a video from your prompt.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'image' | 'video')} className="flex-grow flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-2">
             <TabsTrigger value="image" disabled={isLoading}>
               <ImageIcon className="mr-2 h-4 w-4" /> Image Generator
             </TabsTrigger>
@@ -162,12 +184,33 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
             </TabsTrigger>
           </TabsList>
 
+          {activeTab === 'image' && (
+            <div className="my-4 space-y-2">
+              <Label htmlFor="numImages" className="text-sm font-medium">Number of Image Variations</Label>
+              <Select
+                value={String(numberOfImagesToGenerate)}
+                onValueChange={(val) => setNumberOfImagesToGenerate(Number(val))}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="numImages" className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Select number" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4].map(num => (
+                    <SelectItem key={num} value={String(num)}>{num} Image{num > 1 ? 's' : ''}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+
           <div className="flex-grow flex flex-col justify-between">
-            <div className="flex-grow mb-6 min-h-[300px] md:min-h-[400px] border border-dashed border-border rounded-lg flex items-center justify-center bg-background/30 p-4 overflow-hidden">
+            <div className="flex-grow mb-6 min-h-[300px] md:min-h-[400px] border border-dashed border-border rounded-lg flex items-center justify-center bg-background/30 p-4 overflow-auto">
               {isLoading ? (
                 <div className="text-center w-full">
                   <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto mb-4" />
-                  <p className="text-lg font-semibold text-foreground/90">Generating {activeTab}...</p>
+                  <p className="text-lg font-semibold text-foreground/90">Generating {activeTab === 'image' ? `${numberOfImagesToGenerate} image(s)` : 'video'}...</p>
                   <p className="text-sm text-muted-foreground">This may take a few moments. Please wait.</p>
                   {progress > 0 && <Progress value={progress} className="w-3/4 mx-auto mt-4 h-2" />}
                 </div>
@@ -177,8 +220,24 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
                   <p className="font-semibold">Generation Failed</p>
                   <p className="text-sm">{error}</p>
                 </div>
-              ) : activeTab === 'image' && generatedImageUrl ? (
-                <Image src={generatedImageUrl} alt="Generated Image" width={512} height={512} className="max-h-full max-w-full object-contain rounded-md shadow-md" />
+              ) : activeTab === 'image' && generatedImageUrls && generatedImageUrls.length > 0 ? (
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                    {generatedImageUrls.map((url, index) => (
+                      <div key={index} className="relative group border rounded-md overflow-hidden shadow-md aspect-square">
+                        <Image src={url} alt={`Generated Image ${index + 1}`} layout="fill" className="object-contain" />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleIndividualImageDownload(url, index)}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/70 hover:bg-background/90 h-8 w-8"
+                          title={`Download Image ${index + 1}`}
+                          aria-label={`Download Image ${index + 1}`}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
               ) : activeTab === 'video' && generatedVideoUrl ? (
                 <video src={generatedVideoUrl} controls className="max-h-full max-w-full object-contain rounded-md shadow-md" aria-label="Generated Video Player">
                   Your browser does not support the video tag.
@@ -204,17 +263,17 @@ const GenerationPanel: FC<GenerationPanelProps> = ({
                 ) : (
                   <Film className="mr-2 h-5 w-5" />
                 )}
-                Generate {activeTab === 'image' ? 'Image' : 'Video'}
+                Generate {activeTab === 'image' ? `Image${numberOfImagesToGenerate > 1 ? 's' : ''}` : 'Video'}
               </Button>
 
-              {(generatedImageUrl || generatedVideoUrl) && !isLoading && (
+              {activeTab === 'video' && generatedVideoUrl && !isLoading && (
                 <Button
-                  onClick={handleDownload}
+                  onClick={handleVideoDownload}
                   variant="outline"
                   className="w-full"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Download {activeTab === 'image' ? 'Image' : 'Video'}
+                  Download Video
                 </Button>
               )}
             </div>
