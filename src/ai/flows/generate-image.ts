@@ -40,10 +40,12 @@ const generateImageFlow = ai.defineFlow(
       // Add a slight variation to the prompt for each image if desired, or rely on model stochasticity
       // For now, we use the same prompt and rely on the model's inherent randomness.
       // To make it more distinct, one could append "variation ${i+1}" or similar to the prompt.
+      const imagePrompt = `${input.prompt}. Ensure the generated image is square (1:1 aspect ratio).${numImages > 1 ? ` (variation ${i + 1} of ${numImages})` : ''}`;
+      
       const {media} = await ai.generate({
         // IMPORTANT: ONLY the googleai/gemini-2.0-flash-exp model is able to generate images. You MUST use exactly this model to generate images.
         model: 'googleai/gemini-2.0-flash-exp',
-        prompt: `${input.prompt}${numImages > 1 ? ` (variation ${i + 1} of ${numImages})` : ''}`, // Optional: add variation hint to prompt
+        prompt: imagePrompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
         },
