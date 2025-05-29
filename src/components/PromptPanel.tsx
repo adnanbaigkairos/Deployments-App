@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Wand2, Edit, RotateCcw, Loader2 } from 'lucide-react';
+import { Wand2, Edit, RotateCcw, Loader2, Edit3 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { enhancePrompt, type EnhancePromptInput } from '@/ai/flows/enhance-prompt';
 
