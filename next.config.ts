@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Add other image source hostnames if known, e.g., AI service domains
+      // For Gemini-generated images, they are often on 'generativelanguage.googleapis.com'
+      {
+        protocol: 'https',
+        hostname: 'generativelanguage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
