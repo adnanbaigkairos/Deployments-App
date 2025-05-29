@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { LayoutGrid, Home } from 'lucide-react';
+import { ThemeToggleButton } from '@/components/ThemeToggleButton';
 
 interface PageHeaderProps {
   showNav?: boolean;
@@ -29,8 +30,13 @@ const PageHeader: FC<PageHeaderProps> = ({ showNav = false }) => {
                 Generate
               </Link>
             </Button>
+            <ThemeToggleButton />
           </nav>
         )}
+        {/* If showNav is false, the theme toggle won't appear with the main nav elements
+            per the user request to place it "right side 'Generate' Button".
+            If a global theme toggle is needed on all pages, it would be placed outside this conditional.
+        */}
       </div>
     </header>
   );
