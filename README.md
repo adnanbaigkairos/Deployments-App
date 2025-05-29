@@ -2,6 +2,12 @@
 
 This application, **VisiCraft AI**, is designed to generate images and videos from text prompts using AI. Here's an overview of its technical workings:
 
+### Run:
+* npm install
+* Run Genkit in one terminal
+    * For a single run: npm run genkit:dev
+    * To watch for changes in your AI flow files and automatically restart: npm run genkit:watch
+* Run the Next.js Development Server in another terminal : npm run dev
 ---
 
 ## 1. 🎨 Frontend (User Interface & Interaction)
